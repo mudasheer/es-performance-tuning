@@ -1,0 +1,6 @@
+.DS_Store
+/data_*
+/elasticsearch*
+/*.json
+/*.zip
+/*.tar.gz
