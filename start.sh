@@ -34,4 +34,15 @@ do
     eval "./elasticsearch-7.0.0/bin/elasticsearch -d -Ecluster.name=my_cluster -Enode.master=false -Enode.data=false -Enode.ingest=false -Ecluster.remote.connect=false -Epath.data=../data_coordinating_$i -Enode.name=coordinating_$i" ; 
 done
 
-#./elasticsearch-7.0.0/bin/elasticsearch -d -Ecluster.name=my_cluster -Enode.data=false -Enode.ingest=false -Ecluster.remote.connect=false -Epath.data=../master_1_data_1 -Enode.name=master_1 
+echo "Waiting for Elastic Search to start" 
+until $(curl --output /dev/null --silent --head --fail localhost:9200); do
+    printf '.'
+    sleep 5
+done
+
+for n in $(ls sample/data/ | awk '{print $1}' | cut -f 1 -d '.')
+do
+    echo "Uploading Data for $n" 
+    eval "curl -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/${n}/_doc/_bulk?pretty' --data-binary @sample/data/${n}.json"
+done
+
