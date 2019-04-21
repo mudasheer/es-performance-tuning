@@ -40,6 +40,12 @@ until $(curl --output /dev/null --silent --head --fail localhost:9200); do
     sleep 5
 done
 
+for n in $(ls sample/mappings/ | awk '{print $1}' | cut -f 1 -d '.')
+do
+    echo "Uploading Mapping for $n" 
+    eval "curl -H 'Content-Type: application/json' -XPUT 'localhost:9200/${n}?pretty' --data-binary @sample/mappings/${n}.json"
+done
+
 for n in $(ls sample/data/ | awk '{print $1}' | cut -f 1 -d '.')
 do
     echo "Uploading Data for $n" 
