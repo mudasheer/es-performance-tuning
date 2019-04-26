@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ ! -d "elasticsearch-7.0.0" ]; then
+  curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.0.0-darwin-x86_64.tar.gz
+  tar xvzf *.tar.gz
+fi
+
 echo "Stopping existing cluster"
 ps -ef | grep 'elasticsearch' | grep -v grep | awk '{print $2}' | xargs kill
 
@@ -12,7 +17,6 @@ do
     echo Starting $'\e[1;32m'Dedicated Master$'\e[0m'  $i
     eval "./elasticsearch-7.0.0/bin/elasticsearch -d -Ecluster.name=my_cluster -Enode.data=false -Enode.ingest=false -Ecluster.remote.connect=false -Epath.data=../data_master_$i -Enode.name=master_$i" ; 
 done
-
 
 data=$2
 for (( i=1; i<=$data; i++ )); 
@@ -42,14 +46,5 @@ until $(curl --output /dev/null --silent --head --fail localhost:9200); do
 done
 printf "\n"
 
-for n in $(ls sample/mappings/ | awk '{print $1}' | cut -f 1 -d '.')
-do
-    echo Uploading Mapping for $'\e[1;34m'$n $'\e[0m'
-    eval "curl -H 'Content-Type: application/json' -XPUT 'localhost:9200/${n}?pretty' --data-binary @sample/mappings/${n}.json"
-done
 
-for n in $(ls sample/data/ | awk '{print $1}' | cut -f 1 -d '.')
-do
-    echo Uploading Data for $'\e[1;34m'$n $'\e[0m'
-    eval "curl -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/${n}/_doc/_bulk?pretty' --data-binary @sample/data/${n}.json"
-done
+sh ./reload.sh
